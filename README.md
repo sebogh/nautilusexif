@@ -1,4 +1,4 @@
 nautilusexif
 ============
 
-nautilus context menu for exif manipulation
+Nautilus context menu for metadata (EXIF, IPTC, XMP) manipulation.
