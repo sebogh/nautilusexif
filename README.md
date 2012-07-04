@@ -7,7 +7,7 @@ Install
 -------
 Ensure exiftool is installed:
 
-    apt-get install exiftool
+    sudo apt-get install libimage-exiftool-perl
 
 and place the script (`tag`) in `~/gnome2/nautilus-scripts`.
 
