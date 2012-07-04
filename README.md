@@ -1,7 +1,7 @@
 nautilusexif
 ============
 
-Nautilus context menu for metadata (EXIF, IPTC, XMP) manipulation.
+Nautilus context menu for metadata (EXIF, IPTC, XMP) manipulation, using [exiftool](http://www.sno.phy.queensu.ca/~phil/exiftool/).
 
 Install
 -------
