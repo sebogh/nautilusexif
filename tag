@@ -8,12 +8,19 @@ import subprocess
 import os
 import json
 import sys
-import pprint
+#import pprint
 import logging
 import re 
 
 
 creatorName = 'sebogh'
+
+# Links:
+# http://www.metadataworkinggroup.org/
+# http://metadatadeluxe.pbworks.com
+# http://metadatadeluxe.pbworks.com/w/page/47662311/Top%2010%20List%20of%20Embedded%20Metadata%20Properties
+# http://owl.phy.queensu.ca/~phil/exiftool/TagNames/index.html
+# http://www.photometadata.org/META-Resources-Field-Guide-to-Metadata
 
 
 # catalog describes all metadata that shall be dealt with.
@@ -33,7 +40,7 @@ creatorName = 'sebogh'
 #                    (in the GUI)(TRUE or FALSE).
 #   'synlabels'    : A list of (syntactic-) labels the metadata in 
 #                    questions is know by (in exiftool)(e.g. 
-#                    '["CopyrightNotice", "Copyright"]').
+#                    '["EXIF:Copyright", "IPTC:CopyrightNotice"]').
 #   'rule_below'   : Whether to put a horizontal rule below this entry
 #                    (and the current values) (in the GUI)(TRUE or 
 #                    FALSE).
@@ -50,9 +57,9 @@ catalog = [
            {'label'        : 'Keywords (+)', 
             'max'          : 64,             
             'view_delim'   : ', ', 
-            'view_show'    : False, 
+            'view_show'    : True, 
             'enabled'      : True,
-            'synlabels'    : ['Keywords', 'keywords'],
+            'synlabels'    : ['IPTC:Keywords', 'XMP-dc:subject'],
             'rule_below'   : False,
             'default'      : None,
             'query'        : False,
@@ -64,19 +71,31 @@ catalog = [
             'view_delim'   : ', ', 
             'view_show'    : True, 
             'enabled'      : True,
-            'synlabels'    : ['Keywords', 'keywords'],
+            'synlabels'    : ['IPTC:Keywords', 'XMP-dc:subject'],
             'rule_below'   : True,
             'default'      : None,
             'query'        : True,
             'write_op'     : '-=',
             'write_splitre': ', *',
             },             
-           {'label'        : 'Headline',      
-            'max'          : 256,  
-            'view_show'    : False, 
+           {'label'        : 'ID',      
+            'max'          : 64,  
+            'view_show'    : True, 
             'enabled'      : False,
             'view_delim'   : '\n', 
-            'synlabels'    : ['Headline'],
+            'synlabels'    : ['EXIF:UserComment', 'IPTC:ObjectName', 'XMP-dc:Title'],
+            'rule_below'   : False,
+            'default'      : None,
+            'query'        : True,
+            'write_op'     : '=',
+            'write_splitre': False,
+            },             
+           {'label'        : 'Headline',      
+            'max'          : 256,  
+            'view_show'    : True, 
+            'enabled'      : False,
+            'view_delim'   : '\n', 
+            'synlabels'    : ['IPTC:Headline', 'XMP-photoshop:Headline'],
             'rule_below'   : False,
             'default'      : None,
             'query'        : True,
@@ -85,10 +104,10 @@ catalog = [
             },             
            {'label'        : 'Description',   
             'max'          : 2000, 
-            'view_show'    : False, 
+            'view_show'    : True, 
             'enabled'      : False,
             'view_delim'   : '\n', 
-            'synlabels'    : ['Description'],
+            'synlabels'    : ['EXIF:ImageDescription', 'IPTC:Caption-Abstract', 'XMP-dc:Description'],
             'rule_below'   : False,
             'default'      : None,
             'query'        : True,
@@ -97,10 +116,10 @@ catalog = [
             },             
            {'label'        : 'Creator',       
             'max'          : 32,   
-            'view_show'    : False, 
+            'view_show'    : True, 
             'enabled'      : False,
             'view_delim'   : '\n', 
-            'synlabels'    : ['Creator', 'By-line'],
+            'synlabels'    : ['EXIF:Artist', 'IPTC:By-line', 'XMP-dc:Creator'],
             'rule_below'   : False,
             'default'      : creatorName,
             'query'        : True,
@@ -109,10 +128,10 @@ catalog = [
             },             
            {'label'        : 'Copyright',     
             'max'          : 128,  
-            'view_show'    : False, 
+            'view_show'    : True, 
             'enabled'      : False,
             'view_delim'   : '\n', 
-            'synlabels'    : ['CopyrightNotice', 'Copyright'],
+            'synlabels'    : ['EXIF:Copyright', 'IPTC:CopyrightNotice', 'XMP-dc:Rights'],
             'rule_below'   : False,
             'default'      : 'Copyright (c) 2012 ' + 
                              creatorName + 
@@ -140,6 +159,7 @@ def read_metadata(targets):
     command+= targets
 
     # Execute command.
+    #print ' '.join(command)
     process = subprocess.Popen(command, 
                                shell=False, 
                                stdout=subprocess.PIPE)
@@ -185,11 +205,11 @@ def write_metadata(targets, values):
     command+= targets
 
     # Execute command.
+    #print ' '.join(command)
     process = subprocess.Popen(command, 
                                shell=False, 
                                stdout=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
-
     return 
 
 
@@ -211,10 +231,15 @@ def join_metadata(metadata):
 
                 # Collect metadata from all synlables and ...
                 for synlabel in catalog[i]['synlabels']:
+                    
+                    # Remove any leading family group name.
+                    synlabel = re.sub(r'^[^:]+:', '', synlabel)
+
+                    # If there is an entry for the synlabel.
                     if synlabel in target:
                         bar = target[synlabel]
                         
-                        # Merge into a single set.
+                        # Merge into a single set (removing duplicates).
                         if isinstance(bar, list):
                             foo = foo.union(bar) 
                         else:
