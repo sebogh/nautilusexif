@@ -11,6 +11,6 @@ Ensure exiftool is installed:
 
 and place the script (`tag`) in `~/gnome2/nautilus-scripts`.
 
-Awesome Screenshot
+Screenshot
 ----------
 ![screenshot](./tag.png)
